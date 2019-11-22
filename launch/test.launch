@@ -1,0 +1,3 @@
+<launch>
+  <rosparam command="load" file="$(find unreal_simulator_demo)/config/ros_control_sim.yaml" />
+</launch>

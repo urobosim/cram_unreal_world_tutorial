@@ -1,0 +1,51 @@
+<launch>
+  <!-- upload or not upload the pr2 description, in case one is already uploaded -->
+  <arg name="upload" default="true" />
+
+  <!-- occupancy map -->
+  <include file="$(find iai_maps)/launch/map.launch" />
+
+  <!-- kitchen URDF -->
+  <param name="kitchen_description"
+         command="$(find xacro)/xacro.py '$(find iai_kitchen)/urdf_obj/iai_kitchen_python.urdf.xacro'"/>
+
+  <node pkg="joint_state_publisher" type="joint_state_publisher"
+        name="kitchen_joint_state_publisher" output="screen">
+    <remap from="robot_description" to="kitchen_description"/>
+    <remap from="joint_states" to="kitchen/joint_states"/>
+    <param name="rate" value="25"/>
+    <param name="use_gui" value="False"/>
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="kitchen_link_broadcaster"
+        args="0 0 0 0 0 0 /map /iai_kitchen/world 25">
+  </node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher"
+    name="kitchen_state_publisher" output="screen">
+    <param name="tf_prefix" value="iai_kitchen"/>
+    /* <param name="use_tf_static" value="False"/> */
+    <param name="publish_frequency" value="25"/>
+    <remap from="robot_description" to="kitchen_description" />
+    <remap from="joint_states" to="kitchen/joint_states"/>
+  </node>
+
+  <include file="$(find iai_pr2_description)/launch/upload_pr2.launch" />
+
+  <rosparam command="load" file="$(find unreal_simulator_demo)/config/ros_control_sim.yaml" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher"
+    name="pr2_state_publisher" output="screen">
+    <param name="publish_frequency" value="25"/>
+    <param name="ignore_timestamp" value="true"/>
+    /* <param name="use_tf_static" value="False"/> */
+  </node>
+
+  <node pkg="tf2_ros" type="buffer_server"
+    name="buffer_server" output="screen">
+  </node>
+
+  <include file="$(find pr2_arm_kinematics)/launch/pr2_ik_larm_node.launch" />
+  <include file="$(find pr2_arm_kinematics)/launch/pr2_ik_rarm_node.launch" />
+
+</launch>
